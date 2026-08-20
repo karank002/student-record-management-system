@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduTrack Portal - Student Record Management</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<!-- ================= LOGIN ================= -->
+<div id="login-container" class="auth-wrapper">
+  <div class="auth-card">
+    <div class="brand-badge"><span></span> Student Record Management</div>
+    <div class="auth-header">
+      <h2>EduTrack Portal</h2>
+      <p>Sign in to your teacher account</p>
+    </div>
+    <form id="login-form" novalidate>
+      <div class="form-group">
+        <label for="login-email">Email Address</label>
+        <input type="email" id="login-email" placeholder="you@school.edu" autocomplete="username" required>
+        <span class="field-error hidden" id="login-email-error"></span>
+      </div>
+      <div class="form-group">
+        <label for="login-password">Password</label>
+        <div class="password-input-container">
+          <input type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password" required minlength="6">
+          <button type="button" class="toggle-password-btn" id="btn-toggle-password" aria-label="Show password">👁</button>
+        </div>
+        <span class="field-error hidden" id="login-password-error"></span>
+      </div>
+      <div class="form-group inline-check">
+        <label><input type="checkbox" id="login-remember"> Remember me</label>
+        <span id="backend-status-badge" class="status-badge status-unknown">● Backend: checking…</span>
+      </div>
+      <div class="forgot-link">
+        <a href="#">Forgot password?</a>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    </form>
+    <p class="auth-hint">Tip: sign in with your own name in the email (e.g. <span class="mono">vanshita.dhir@school.edu</span>) — the dashboard greets whoever is signed in.</p>
+    <div class="auth-footer">
+      New teacher? <a href="#">Create account</a>
+    </div>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app-container" class="app-layout hidden">
+  <header class="main-header">
+    <div class="logo">
+      <span class="logo-icon"></span>
+      <div class="logo-text">
+        <h1>EduTrack</h1>
+        <span>Student Records</span>
+      </div>
+    </div>
+
+    <nav class="nav-tabs">
+      <button class="nav-tab active" data-tab="overview" onclick="window.app.switchTab('overview')">Overview</button>
+      <button class="nav-tab" data-tab="students" onclick="window.app.switchTab('students')">Students</button>
+      <button class="nav-tab" data-tab="admissions" onclick="window.app.switchTab('admissions')">Admissions<span class="tab-count-badge hidden" id="admissions-tab-count">0</span></button>
+      <button class="nav-tab" data-tab="attendance" onclick="window.app.switchTab('attendance')">Attendance</button>
+      <button class="nav-tab" data-tab="reports" onclick="window.app.switchTab('reports')">Reports</button>
+      <button class="nav-tab" data-tab="smart" onclick="window.app.switchTab('smart')">Smart Tools</button>
+    </nav>
+
+    <div class="header-actions">
+      <button class="icon-btn" id="btn-dark-mode" title="Toggle dark mode">🌙</button>
+      <button class="icon-btn" id="btn-notifications" title="Notifications">🔔<span class="notif-dot hidden" id="notif-dot"></span></button>
+      <div class="header-profile" id="profile-trigger">
+        <div class="avatar-circle">DA</div>
+        <span class="profile-name">Dr. Anjali Singh</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="content-body">
+
+    <!-- ===== OVERVIEW ===== -->
+    <section id="view-overview" class="tab-view active">
+      <div class="welcome-banner">
+        <h2 id="welcome-text">Welcome back, Dr. Anjali Singh</h2>
+        <p id="student-count-summary">You have 6 students enrolled.</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon purple"></div>
+          <div class="stat-info"><h3 id="stat-total">0</h3><p>Total Students</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green"></div>
+          <div class="stat-info"><h3 id="stat-active">0</h3><p>Active</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon orange"></div>
+          <div class="stat-info"><h3 id="stat-leave">0</h3><p>On Leave</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pink"></div>
+          <div class="stat-info"><h3 id="stat-gpa">0.0</h3><p>Avg GPA</p></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue"></div>
+          <div class="stat-info"><h3 id="stat-attendance">0%</h3><p>Avg Attendance</p></div>
+        </div>
+      </div>
+
+      <div class="dashboard-section chart-container">
+        <h3>Grade / Year Distribution</h3>
+        <div id="dynamic-chart" class="chart-bars-wrapper"></div>
+      </div>
+
+      <div class="dashboard-grid-2">
+        <div class="dashboard-section dynamic-list-section">
+          <div class="section-header">
+            <h3>Recent Students</h3>
+            <button class="link-btn" onclick="window.app.switchTab('students')">View all →</button>
+          </div>
+          <div class="recent-students-list" id="recent-students-container"></div>
+        </div>
+
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h3>At-Risk Students</h3>
+            <span class="hint-text">Attendance below 75%</span>
+          </div>
+          <div class="recent-students-list" id="at-risk-container"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== STUDENTS ===== -->
+    <section id="view-students" class="tab-view">
+      <div class="controls-bar">
+        <div class="search-box search-box-autocomplete">
+          <input type="text" id="search-input" placeholder="Search by name, email, roll number..." autocomplete="off">
+          <div class="autocomplete-dropdown hidden" id="autocomplete-dropdown"></div>
+        </div>
+        <div class="filter-group">
+          <select id="filter-status">
+            <option value="all">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+          </select>
+          <select id="sort-by" title="Sorted with a hand-written Merge Sort">
+            <option value="name-asc">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="gpa-desc">GPA (High-Low)</option>
+            <option value="gpa-asc">GPA (Low-High)</option>
+            <option value="attendance-desc">Attendance (High-Low)</option>
+            <option value="attendance-asc">Attendance (Low-High)</option>
+          </select>
+          <button class="btn btn-secondary" id="btn-export-csv">⬇ Export CSV</button>
+          <button class="btn btn-ghost btn-undo" id="btn-undo-delete" disabled title="Undo last delete (Stack)">↺ Undo Delete</button>
+          <button class="btn btn-danger hidden" id="btn-bulk-delete">Delete Selected (<span id="bulk-count">0</span>)</button>
+          <button class="btn btn-primary" id="btn-open-add-modal">+ Add Student</button>
+        </div>
+      </div>
+      <p class="dsa-hint">🔎 Autocomplete = <strong>Trie</strong> · Sort = <strong>Merge Sort</strong> · Undo = <strong>Stack</strong></p>
+
+      <div class="results-meta">
+        <label class="select-all-wrap">
+          <input type="checkbox" id="select-all-checkbox"> Select all
+        </label>
+        Showing <span id="current-count">0</span> of <span id="total-count">0</span> students
+      </div>
+
+      <div class="students-grid" id="students-grid-container"></div>
+
+      <div class="pagination-bar" id="pagination-bar">
+        <button class="btn btn-ghost" id="btn-prev-page">← Prev</button>
+        <span id="page-indicator">Page 1 of 1</span>
+        <button class="btn btn-ghost" id="btn-next-page">Next →</button>
+      </div>
+    </section>
+
+    <!-- ===== ADMISSIONS (Queue) ===== -->
+    <section id="view-admissions" class="tab-view">
+      <div class="section-header">
+        <h3>Admission / Waiting Queue</h3>
+        <p class="hint-text">New registrations join the back of the line. <strong>Next Student</strong> pulls from the front — a real FIFO Queue.</p>
+      </div>
+
+      <div class="dashboard-grid-2">
+        <div class="dashboard-section">
+          <h3>New Registration</h3>
+          <form id="admission-form">
+            <div class="form-group">
+              <label>Full Name</label>
+              <input type="text" id="adm-name" placeholder="Applicant full name" required>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="adm-email" placeholder="applicant@school.edu" required>
+              </div>
+              <div class="form-group">
+                <label>Phone</label>
+                <input type="tel" id="adm-phone" placeholder="+91 98765-43210" required>
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Roll Number</label>
+                <input type="text" id="adm-roll" placeholder="2026010" required>
+              </div>
+              <div class="form-group">
+                <label>Grade / Year / Sem</label>
+                <input type="text" id="adm-grade" placeholder="e.g., 10th, 1st Sem" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Subject / Course</label>
+              <input type="text" id="adm-subject" placeholder="e.g., Mathematics, CSE" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Join Queue →</button>
+          </form>
+        </div>
+
+        <div class="dashboard-section">
+          <div class="section-header">
+            <h3>Waiting Line <span class="hint-text" id="queue-size-label">(0 waiting)</span></h3>
+            <button class="btn btn-primary" id="btn-admit-next">Next Student →</button>
+          </div>
+          <div class="recent-students-list queue-list" id="admission-queue-container"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ATTENDANCE ===== -->
+    <section id="view-attendance" class="tab-view">
+      <div class="section-header">
+        <h3>Attendance Tracker</h3>
+        <p class="hint-text">Mark today's attendance for each student</p>
+      </div>
+      <div class="controls-bar">
+        <input type="date" id="attendance-date">
+        <button class="btn btn-primary" id="btn-save-attendance">Save Attendance</button>
+      </div>
+      <div class="attendance-table-wrapper">
+        <table class="attendance-table" id="attendance-table">
+          <thead>
+            <tr><th>Roll No.</th><th>Name</th><th>Grade</th><th>Present</th></tr>
+          </thead>
+          <tbody id="attendance-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ===== REPORTS ===== -->
+    <section id="view-reports" class="tab-view">
+      <div class="section-header">
+        <h3>Reports & Insights</h3>
+      </div>
+      <div class="dashboard-grid-2">
+        <div class="dashboard-section">
+          <h3>GPA Distribution</h3>
+          <div id="gpa-distribution-chart" class="chart-bars-wrapper"></div>
+        </div>
+        <div class="dashboard-section">
+          <h3>Attendance Buckets</h3>
+          <div id="attendance-buckets-chart" class="chart-bars-wrapper"></div>
+        </div>
+      </div>
+      <div class="dashboard-section">
+        <h3>Top 10 Rank List <span class="hint-text">— powered by a Max-Heap</span></h3>
+        <div class="recent-students-list rank-list" id="top-performers-container"></div>
+      </div>
+    </section>
+
+    <!-- ===== SMART TOOLS (new DSA-powered features) ===== -->
+    <section id="view-smart" class="tab-view">
+      <div class="section-header">
+        <h3>Smart Tools</h3>
+        <span class="hint-text">Four more data structures at work behind these tools</span>
+      </div>
+
+      <div class="dashboard-grid-2">
+        <div class="dashboard-section">
+          <h3>GPA Range Explorer <span class="hint-text">— Binary Search Tree</span></h3>
+          <p class="tool-desc">Every student's GPA lives in a BST. Pick a range and the tree prunes whole branches instead of scanning every record.</p>
+          <div class="tool-inline-form">
+            <div class="form-group compact">
+              <label for="bst-min">Min GPA</label>
+              <input type="number" id="bst-min" min="0" max="10" step="0.1" value="7">
+            </div>
+            <div class="form-group compact">
+              <label for="bst-max">Max GPA</label>
+              <input type="number" id="bst-max" min="0" max="10" step="0.1" value="10">
+            </div>
+            <button class="btn btn-primary" id="btn-bst-search">Search Tree</button>
+          </div>
+          <div class="tool-stats" id="bst-stats"></div>
+          <div class="recent-students-list" id="bst-results"></div>
+        </div>
+
+        <div class="dashboard-section">
+          <h3>Study Buddy Finder <span class="hint-text">— Graph + BFS</span></h3>
+          <p class="tool-desc">Students sharing a subject and grade are connected in a graph. BFS finds peers within a chosen number of introductions.</p>
+          <div class="tool-inline-form">
+            <div class="form-group compact grow">
+              <label for="buddy-student-select">Student</label>
+              <select id="buddy-student-select"></select>
+            </div>
+            <div class="form-group compact">
+              <label for="buddy-depth">Depth</label>
+              <select id="buddy-depth">
+                <option value="1">1 hop</option>
+                <option value="2" selected>2 hops</option>
+                <option value="3">3 hops</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" id="btn-find-buddies">Find Buddies</button>
+          </div>
+          <div class="recent-students-list" id="buddy-results"></div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid-2">
+        <div class="dashboard-section">
+          <h3>Recently Viewed <span class="hint-text">— LRU Cache, capacity 5</span></h3>
+          <p class="tool-desc">Opening a student's profile touches an LRU cache. The 6th view evicts whoever's been looked at least recently.</p>
+          <div class="recent-students-list" id="lru-results"></div>
+        </div>
+
+        <div class="dashboard-section">
+          <h3>Find by Roll No. <span class="hint-text">— Merge Sort + Binary Search</span></h3>
+          <p class="tool-desc">The roster is merge-sorted by roll number once, then searched in O(log n) instead of a linear scan.</p>
+          <div class="tool-inline-form">
+            <div class="form-group compact grow">
+              <label for="roll-search-input">Roll number</label>
+              <input type="text" id="roll-search-input" placeholder="e.g. 2026003">
+            </div>
+            <button class="btn btn-primary" id="btn-roll-search">Search</button>
+          </div>
+          <div class="recent-students-list" id="roll-search-result"></div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ================= ADD/EDIT STUDENT MODAL ================= -->
+<div id="student-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3 id="modal-title">Add New Student</h3>
+      <button class="close-modal-btn" id="btn-close-student-modal">&times;</button>
+    </div>
+    <form id="student-form">
+      <input type="hidden" id="student-edit-id">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="stud-name" placeholder="Student full name" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="stud-email" placeholder="student@school.edu" required>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="stud-phone" placeholder="+91 98765-43210" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Roll Number</label>
+          <input type="text" id="stud-roll" placeholder="2026001" required>
+        </div>
+        <div class="form-group">
+          <label>Date of Birth</label>
+          <input type="date" id="stud-dob" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Grade / Year / Sem</label>
+          <input type="text" id="stud-grade" placeholder="e.g., 10th, 3rd Sem" required>
+        </div>
+        <div class="form-group">
+          <label>Subject / Course</label>
+          <input type="text" id="stud-subject" placeholder="e.g., Mathematics, CSE" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Classes Attended</label>
+          <input type="number" min="0" id="stud-attended" placeholder="e.g. 45" required>
+        </div>
+        <div class="form-group">
+          <label>Total Classes Held</label>
+          <input type="number" min="1" id="stud-total-classes" placeholder="e.g. 50" required>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>GPA / Marks</label>
+          <input type="number" step="0.01" min="0" max="10" id="stud-gpa" placeholder="9.0" required>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="stud-status">
+            <option value="Active">Active</option>
+            <option value="On Leave">On Leave</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Guardian Name</label>
+        <input type="text" id="stud-guardian" placeholder="Parent / guardian full name">
+      </div>
+      <div class="form-group">
+        <label>Address</label>
+        <textarea id="stud-address" rows="2" placeholder="Student home address"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Notes / Remarks</label>
+        <textarea id="stud-notes" rows="2" placeholder="Any additional remarks"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block" id="btn-save-student">Add Student</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= STUDENT DETAIL / PROFILE VIEW MODAL ================= -->
+<div id="student-detail-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Student Profile</h3>
+      <button class="close-modal-btn" id="btn-close-detail-modal">&times;</button>
+    </div>
+    <div class="detail-profile-header">
+      <div class="large-circle" id="detail-avatar">S</div>
+      <div>
+        <h3 id="detail-name">—</h3>
+        <p id="detail-roll-grade">—</p>
+        <span class="status-pill" id="detail-status">—</span>
+      </div>
+    </div>
+    <div class="detail-stats-row">
+      <div class="detail-stat"><span id="detail-gpa">0.0</span><label>GPA</label></div>
+      <div class="detail-stat"><span id="detail-attendance-pct">0%</span><label>Attendance</label></div>
+      <div class="detail-stat"><span id="detail-classes">0/0</span><label>Classes</label></div>
+    </div>
+    <div class="attendance-progress-wrap">
+      <div class="attendance-progress-bar"><div class="attendance-progress-fill" id="detail-progress-fill"></div></div>
+    </div>
+    <div class="detail-info-grid">
+      <p><strong>Email:</strong> <span id="detail-email">—</span></p>
+      <p><strong>Phone:</strong> <span id="detail-phone">—</span></p>
+      <p><strong>DOB:</strong> <span id="detail-dob">—</span></p>
+      <p><strong>Subject:</strong> <span id="detail-subject">—</span></p>
+      <p><strong>Guardian:</strong> <span id="detail-guardian">—</span></p>
+      <p><strong>Address:</strong> <span id="detail-address">—</span></p>
+    </div>
+    <div class="detail-notes-box">
+      <strong>Notes:</strong>
+      <p id="detail-notes">—</p>
+    </div>
+    <div class="modal-footer-actions">
+      <button class="btn btn-secondary" id="btn-detail-edit">Edit</button>
+      <button class="btn btn-danger" id="btn-detail-delete">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- ================= PROFILE MODAL ================= -->
+<div id="profile-modal" class="modal-overlay hidden">
+  <div class="modal-card">
+    <div class="modal-header header-colored">
+      <h3>Edit Profile</h3>
+      <button class="close-modal-btn" id="btn-close-profile-modal">&times;</button>
+    </div>
+    <div class="profile-avatar-large">
+      <div class="large-circle">DA</div>
+    </div>
+    <form id="profile-form">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="prof-name" value="Dr. Anjali Singh" required>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Email</label>
+          <input type="email" id="prof-email" value="anjali.singh@school.edu" required>
+        </div>
+        <div class="form-group">
+          <label>Phone</label>
+          <input type="tel" id="prof-phone" value="+91 99887 76655" required>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>School / Institution</label>
+        <input type="text" id="prof-inst" value="Delhi Public School" required>
+      </div>
+      <div class="form-group">
+        <label>Subject / Department</label>
+        <input type="text" id="prof-dept" value="Mathematics" required>
+      </div>
+      <div class="form-group">
+        <label>Bio</label>
+        <textarea id="prof-bio" rows="3">Passionate educator with 12+ years of experience in secondary and higher education.</textarea>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Save Profile</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= TOAST CONTAINER ================= -->
+<div id="toast-container" class="toast-container"></div>
+
+<script src="data.js"></script>
+<script src="api.js"></script>
+<script src="dsa.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
